@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8081/api';
+// If in production, use the relative path '/api' so it queries itself.
+// If in development mode, hit the localhost backend port.
+const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:8081/api';
 
 const api = axios.create({
   baseURL: API_URL,
