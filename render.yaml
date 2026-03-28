@@ -6,7 +6,7 @@ services:
     plan: free
     branch: main
     repo: https://github.com/amanladji/crm-project
-    healthCheckPath: /api/customers
+    healthCheckPath: /api/health
     envVars:
       - key: PORT
         value: 8080
