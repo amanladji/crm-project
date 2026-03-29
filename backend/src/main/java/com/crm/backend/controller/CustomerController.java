@@ -21,6 +21,11 @@ public class CustomerController {
         return ResponseEntity.ok(customerService.getAllCustomers());
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<Customer>> searchCustomers(@RequestParam(required = false) String query) {
+        return ResponseEntity.ok(customerService.searchCustomers(query));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
         return ResponseEntity.ok(customerService.getCustomerById(id));

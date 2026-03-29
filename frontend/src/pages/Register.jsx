@@ -19,7 +19,9 @@ function Register() {
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       console.error('Registration failed:', err);
-      setMessage(err.response?.data || 'Failed to register');
+      // Ensure we extract the string message if the data is an object
+      const errorMsg = err.response?.data?.message || err.response?.data || 'Failed to register';
+      setMessage(typeof errorMsg === 'string' ? errorMsg : 'Failed to register (check console)');
       setIsSuccess(false);
     }
   };

@@ -19,8 +19,24 @@ public class LeadController {
     private final LeadService leadService;
 
     @GetMapping
-    public ResponseEntity<List<Lead>> getAllLeads() {
-        return ResponseEntity.ok(leadService.getAllLeads());
+    public ResponseEntity<?> getAllLeads(@RequestParam(required = false) String status) {
+        try {
+            if (status != null && !status.trim().isEmpty()) {
+                return ResponseEntity.ok(leadService.filterByStatus(status));
+            }
+            return ResponseEntity.ok(leadService.getAllLeads());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchLeads(@RequestParam(required = false) String query, @RequestParam(required = false) String status) {
+        try {
+            return ResponseEntity.ok(leadService.searchAndFilterLeads(query, status));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")

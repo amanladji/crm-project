@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { getLeads, createLead, updateLead, deleteLead, updateLeadStatus } from '../services/lead.service';
+import { getLeads, createLead, updateLead, deleteLead, updateLeadStatus, searchLeads } from '../services/lead.service';
 import { getCustomers } from '../services/customer.service';
 
 function Leads() {
@@ -11,15 +11,24 @@ function Leads() {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '', status: 'NEW', customerId: '' });
   const [errors, setErrors] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLeads();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, statusFilter]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [leadsRes, customRes] = await Promise.all([getLeads(), getCustomers()]);
+      const [leadsRes, customRes] = await Promise.all([searchLeads(searchQuery, statusFilter), getCustomers()]);
       setLeads(leadsRes.data);
       setCustomers(customRes.data);
       setLoading(false);
@@ -31,7 +40,7 @@ function Leads() {
 
   const fetchLeads = async () => {
     try {
-      const response = await getLeads();
+      const response = await searchLeads(searchQuery, statusFilter);
       setLeads(response.data);
     } catch (error) {
       console.error('Error fetching leads:', error);
@@ -130,12 +139,33 @@ function Leads() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
-            <button 
-              onClick={openAddModal}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-            >
-              Add Lead
-            </button>
+            <div className="flex gap-4 items-center">
+              <input
+                type="text"
+                placeholder="Search by name/company..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                <option value="">All Statuses</option>
+                <option value="NEW">NEW</option>
+                <option value="CONTACTED">CONTACTED</option>
+                <option value="QUALIFIED">QUALIFIED</option>
+                <option value="CONVERTED">CONVERTED</option>
+                <option value="LOST">LOST</option>
+              </select>
+              <button 
+                onClick={openAddModal}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 whitespace-nowrap"
+              >
+                Add Lead
+              </button>
+            </div>
           </div>
 
           {showModal && (

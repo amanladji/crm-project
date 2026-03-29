@@ -24,6 +24,13 @@ public class CustomerService {
         return customerRepository.findAll();
     }
 
+    public List<Customer> searchCustomers(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return customerRepository.findAll();
+        }
+        return customerRepository.searchCustomers(query.trim());
+    }
+
     public Customer getCustomerById(Long id) {
         return customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));

@@ -1,28 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Navbar from '../components/Navbar';
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../services/customer.service';
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer, searchCustomers } from '../services/customer.service';
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '', address: '' });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    fetchCustomers();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchCustomersList();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const fetchCustomers = async () => {
+  const fetchCustomersList = async () => {
+    setLoading(true);
     try {
-      const response = await getCustomers();
+      const response = await searchCustomers(searchQuery);
       setCustomers(response.data);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching customers:', error);
+    } finally {
       setLoading(false);
     }
+  };
+
+  const fetchCustomers = () => {
+    fetchCustomersList();
   };
 
   const handleInputChange = (e) => {
@@ -111,12 +120,21 @@ function Customers() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-            <button
-              onClick={openAddModal}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
-              Add Customer
-            </button>
+            <div className="flex gap-4">
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              <button
+                onClick={openAddModal}
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 whitespace-nowrap"
+              >
+                Add Customer
+              </button>
+            </div>
           </div>
 
           {showModal && (

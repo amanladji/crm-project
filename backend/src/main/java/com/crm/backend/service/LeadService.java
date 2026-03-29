@@ -27,6 +27,31 @@ public class LeadService {
         return leadRepository.findAll();
     }
 
+    public List<Lead> filterByStatus(String statusString) {
+        if (statusString == null || statusString.trim().isEmpty()) {
+            return getAllLeads();
+        }
+        try {
+            LeadStatus status = LeadStatus.valueOf(statusString.toUpperCase());
+            return leadRepository.findByStatus(status);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + statusString);
+        }
+    }
+
+    public List<Lead> searchAndFilterLeads(String query, String statusString) {
+        LeadStatus status = null;
+        if (statusString != null && !statusString.trim().isEmpty()) {
+            try {
+                status = LeadStatus.valueOf(statusString.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid status: " + statusString);
+            }
+        }
+        String searchQuery = (query == null || query.trim().isEmpty()) ? null : query.trim();
+        return leadRepository.searchAndFilterLeads(searchQuery, status);
+    }
+
     public Lead getLeadById(Long id) {
         return leadRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lead not found with id: " + id));
