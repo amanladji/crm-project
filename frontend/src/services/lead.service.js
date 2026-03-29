@@ -1,14 +1,13 @@
 import api from './api';
 
-export const getLeads = () => api.get('/leads');
-export const searchLeads = (query, status) => {
+export const getLeads = (page = 0, size = 10) => api.get(`/leads?page=${page}&size=${size}`);
+export const searchLeads = (query, status, page = 0, size = 10) => {
   const params = new URLSearchParams();
   if (query) params.append('query', query);
   if (status) params.append('status', status);
-  if (params.toString()) {
-    return api.get(`/leads/search?${params.toString()}`);
-  }
-  return getLeads();
+  params.append('page', page);
+  params.append('size', size);
+  return api.get(`/leads/search?${params.toString()}`);
 };
 export const getLeadsByAssignee = (userId) => api.get(`/leads/assignee/${userId}`);
 export const createLead = (data) => api.post('/leads', data);

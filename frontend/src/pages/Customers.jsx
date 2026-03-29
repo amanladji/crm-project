@@ -6,23 +6,30 @@ function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '', address: '' });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    setCurrentPage(0); // Reset to page 0 globally when a search query is changed
+  }, [searchQuery]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchCustomersList();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, currentPage]);
 
   const fetchCustomersList = async () => {
     setLoading(true);
     try {
-      const response = await searchCustomers(searchQuery);
-      setCustomers(response.data);
+      const response = await searchCustomers(searchQuery, currentPage, 10);
+      setCustomers(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error('Error fetching customers:', error);
     } finally {
@@ -210,6 +217,55 @@ function Customers() {
                   </li>
                 ))}
               </ul>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && customers.length > 0 && (
+              <div className="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md bg-white ${currentPage === 0 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md bg-white ${currentPage >= totalPages - 1 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing Page <span className="font-medium">{currentPage + 1}</span> of <span className="font-medium">{totalPages}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${currentPage === 0 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'}`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${currentPage >= totalPages - 1 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'}`}
+                      >
+                        <span className="sr-only">Next</span>
+                        Next
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

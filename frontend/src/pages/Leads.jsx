@@ -13,24 +13,31 @@ function Leads() {
   const [errors, setErrors] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
+    setCurrentPage(0);
+  }, [searchQuery, statusFilter]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchLeads();
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, currentPage]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [leadsRes, customRes] = await Promise.all([searchLeads(searchQuery, statusFilter), getCustomers()]);
-      setLeads(leadsRes.data);
-      setCustomers(customRes.data);
+      const [leadsRes, customRes] = await Promise.all([searchLeads(searchQuery, statusFilter, currentPage, 10), getCustomers(0, 100)]);
+      setLeads(leadsRes.data.content);
+      setTotalPages(leadsRes.data.totalPages);
+      setCustomers(customRes.data.content || customRes.data); // Keep backwards compatibility if ever needed
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -40,8 +47,9 @@ function Leads() {
 
   const fetchLeads = async () => {
     try {
-      const response = await searchLeads(searchQuery, statusFilter);
-      setLeads(response.data);
+      const response = await searchLeads(searchQuery, statusFilter, currentPage, 10);
+      setLeads(response.data.content);
+      setTotalPages(response.data.totalPages);
     } catch (error) {
       console.error('Error fetching leads:', error);
     }
@@ -267,6 +275,55 @@ function Leads() {
                   </li>
                 ))}
               </ul>
+            )}
+            
+            {/* Pagination Controls */}
+            {!loading && leads.length > 0 && (
+              <div className="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
+                <div className="flex-1 flex justify-between sm:hidden">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                    disabled={currentPage === 0}
+                    className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md bg-white ${currentPage === 0 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    Previous
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                    disabled={currentPage >= totalPages - 1}
+                    className={`ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md bg-white ${currentPage >= totalPages - 1 ? 'text-gray-300' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    Next
+                  </button>
+                </div>
+                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing Page <span className="font-medium">{currentPage + 1}</span> of <span className="font-medium">{totalPages}</span>
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))}
+                        disabled={currentPage === 0}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${currentPage === 0 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'}`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        Previous
+                      </button>
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages - 1, prev + 1))}
+                        disabled={currentPage >= totalPages - 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${currentPage >= totalPages - 1 ? 'text-gray-300' : 'text-gray-500 hover:bg-gray-50'}`}
+                      >
+                        <span className="sr-only">Next</span>
+                        Next
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

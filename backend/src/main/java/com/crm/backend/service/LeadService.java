@@ -10,6 +10,8 @@ import com.crm.backend.repository.CustomerRepository;
 import com.crm.backend.repository.LeadRepository;
 import com.crm.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,23 +25,11 @@ public class LeadService {
     private final UserRepository userRepository;
     private final CustomerRepository customerRepository;
 
-    public List<Lead> getAllLeads() {
-        return leadRepository.findAll();
+    public Page<Lead> getAllLeads(Pageable pageable) {
+        return leadRepository.findAll(pageable);
     }
 
-    public List<Lead> filterByStatus(String statusString) {
-        if (statusString == null || statusString.trim().isEmpty()) {
-            return getAllLeads();
-        }
-        try {
-            LeadStatus status = LeadStatus.valueOf(statusString.toUpperCase());
-            return leadRepository.findByStatus(status);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status: " + statusString);
-        }
-    }
-
-    public List<Lead> searchAndFilterLeads(String query, String statusString) {
+    public Page<Lead> searchAndFilterLeads(String query, String statusString, Pageable pageable) {
         LeadStatus status = null;
         if (statusString != null && !statusString.trim().isEmpty()) {
             try {
@@ -49,7 +39,7 @@ public class LeadService {
             }
         }
         String searchQuery = (query == null || query.trim().isEmpty()) ? null : query.trim();
-        return leadRepository.searchAndFilterLeads(searchQuery, status);
+        return leadRepository.searchAndFilterLeads(searchQuery, status, pageable);
     }
 
     public Lead getLeadById(Long id) {

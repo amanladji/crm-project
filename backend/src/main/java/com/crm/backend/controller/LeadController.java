@@ -4,11 +4,16 @@ import com.crm.backend.dto.LeadRequest;
 import com.crm.backend.entity.Lead;
 import com.crm.backend.service.LeadService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -19,21 +24,48 @@ public class LeadController {
     private final LeadService leadService;
 
     @GetMapping
-    public ResponseEntity<?> getAllLeads(@RequestParam(required = false) String status) {
+    public ResponseEntity<?> getAllLeads(
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,desc") String[] sort) {
         try {
-            if (status != null && !status.trim().isEmpty()) {
-                return ResponseEntity.ok(leadService.filterByStatus(status));
-            }
-            return ResponseEntity.ok(leadService.getAllLeads());
+            String sortField = sort[0];
+            Sort.Direction sortDirection = sort[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortField));
+
+            Page<Lead> pageLeads;
+            // Since getAllLeads was previously handling empty status, but now searchAndFilterLeads handles it perfectly:
+            pageLeads = leadService.searchAndFilterLeads(null, status, pageable);
+            return ResponseEntity.ok(createPaginatedResponse(pageLeads));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    private Map<String, Object> createPaginatedResponse(Page<?> pageData) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", pageData.getContent());
+        response.put("currentPage", pageData.getNumber());
+        response.put("totalItems", pageData.getTotalElements());
+        response.put("totalPages", pageData.getTotalPages());
+        return response;
+    }
+
     @GetMapping("/search")
-    public ResponseEntity<?> searchLeads(@RequestParam(required = false) String query, @RequestParam(required = false) String status) {
+    public ResponseEntity<?> searchLeads(
+            @RequestParam(required = false) String query, 
+            @RequestParam(required = false) String status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id,desc") String[] sort) {
         try {
-            return ResponseEntity.ok(leadService.searchAndFilterLeads(query, status));
+            String sortField = sort[0];
+            Sort.Direction sortDirection = sort[1].equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortField));
+            
+            Page<Lead> pageLeads = leadService.searchAndFilterLeads(query, status, pageable);
+            return ResponseEntity.ok(createPaginatedResponse(pageLeads));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -8,6 +8,8 @@ import com.crm.backend.repository.CustomerRepository;
 import com.crm.backend.repository.LeadRepository;
 import com.crm.backend.repository.ActivityRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,15 +22,15 @@ public class CustomerService {
     private final LeadRepository leadRepository;
     private final ActivityRepository activityRepository;
 
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
+    public Page<Customer> getAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable);
     }
 
-    public List<Customer> searchCustomers(String query) {
+    public Page<Customer> searchCustomers(String query, Pageable pageable) {
         if (query == null || query.trim().isEmpty()) {
-            return customerRepository.findAll();
+            return customerRepository.findAll(pageable);
         }
-        return customerRepository.searchCustomers(query.trim());
+        return customerRepository.searchCustomers(query, pageable);
     }
 
     public Customer getCustomerById(Long id) {

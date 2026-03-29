@@ -39,14 +39,15 @@ public class CustomerServiceTest {
 
     @Test
     void getAllCustomers_ReturnsList() {
-        when(customerRepository.findAll()).thenReturn(Arrays.asList(testCustomer));
+        org.springframework.data.domain.Page<Customer> page = new org.springframework.data.domain.PageImpl<>(Arrays.asList(testCustomer));
+        when(customerRepository.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class))).thenReturn(page);
 
-        List<Customer> result = customerService.getAllCustomers();
+        org.springframework.data.domain.Page<Customer> result = customerService.getAllCustomers(org.springframework.data.domain.PageRequest.of(0, 10));
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("Test Company", result.get(0).getName());
-        verify(customerRepository, times(1)).findAll();
+        assertEquals(1, result.getContent().size());
+        assertEquals("Test Company", result.getContent().get(0).getName());
+        verify(customerRepository, times(1)).findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class));
     }
 
     @Test

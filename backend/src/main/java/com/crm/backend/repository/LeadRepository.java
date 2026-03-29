@@ -2,6 +2,8 @@ package com.crm.backend.repository;
 
 import com.crm.backend.entity.Lead;
 import com.crm.backend.enums.LeadStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,5 +22,5 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     @Query("SELECT l FROM Lead l WHERE " +
            "(:status IS NULL OR l.status = :status) AND " +
            "(:query IS NULL OR LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    List<Lead> searchAndFilterLeads(@Param("query") String query, @Param("status") LeadStatus status);
+    Page<Lead> searchAndFilterLeads(@Param("query") String query, @Param("status") LeadStatus status, Pageable pageable);
 }

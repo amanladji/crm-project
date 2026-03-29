@@ -1,9 +1,9 @@
 import api from './api';
 
-export const getCustomers = () => api.get('/customers');
-export const searchCustomers = (query) => {
-  if (!query) return getCustomers();
-  return api.get(`/customers/search?query=${encodeURIComponent(query)}`);
+export const getCustomers = (page = 0, size = 10) => api.get(`/customers?page=${page}&size=${size}`);
+export const searchCustomers = (query, page = 0, size = 10) => {
+  if (!query) return getCustomers(page, size);
+  return api.get(`/customers/search?query=${encodeURIComponent(query)}&page=${page}&size=${size}`);
 };
 export const getCustomerById = (id) => api.get(`/customers/${id}`);
 export const getLeadsForCustomer = (id) => api.get(`/customers/${id}/leads`);
