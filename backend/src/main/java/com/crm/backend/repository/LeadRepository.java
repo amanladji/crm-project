@@ -16,7 +16,7 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     List<Lead> findByAssignedUserId(Long userId);
     List<Lead> findByCustomerId(Long customerId);
     long countByStatus(LeadStatus status);
-    
+
     List<Lead> findByStatus(LeadStatus status);
 
     @Query("SELECT l FROM Lead l WHERE " +

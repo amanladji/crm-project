@@ -16,7 +16,9 @@ function Register() {
       await authService.register(username, email, password);
       setIsSuccess(true);
       setMessage('Registration successful! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
     } catch (err) {
       console.error('Registration failed:', err);
       // Ensure we extract the string message if the data is an object

@@ -27,13 +27,13 @@ function Login() {
           <div className="mt-4">
             <div>
               <label className="block" htmlFor="username">Username</label>
-              <input type="text" placeholder="Username"
+              <input type="text" id="username" placeholder="Username"
                 className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                 value={username} onChange={(e) => setUsername(e.target.value)} required />
             </div>
             <div className="mt-4">
-              <label className="block">Password</label>
-              <input type="password" placeholder="Password"
+              <label className="block" htmlFor="password">Password</label>
+              <input type="password" id="password" placeholder="Password"
                 className="w-full px-4 py-2 mt-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-600"
                 value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
