@@ -15,7 +15,23 @@ const logout = () => {
 };
 
 const getCurrentUser = () => {
-  return JSON.parse(localStorage.getItem('user'));
+  try {
+    const userStr = localStorage.getItem('user');
+    if (!userStr || userStr === 'undefined' || userStr === 'null') {
+      localStorage.removeItem('user');
+      return null;
+    }
+    const user = JSON.parse(userStr);
+    if (user && user.token && typeof user.token === 'string') {
+      return user;
+    } else {
+      localStorage.removeItem('user');
+      return null;
+    }
+  } catch (e) {
+    localStorage.removeItem('user');
+    return null;
+  }
 };
 
 const register = (username, email, password) => {

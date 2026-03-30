@@ -8,6 +8,7 @@ export const searchCustomers = (query, page = 0, size = 10) => {
 export const getCustomerById = (id) => api.get(`/customers/${id}`);
 export const getLeadsForCustomer = (id) => api.get(`/customers/${id}/leads`);
 export const getActivitiesForCustomer = (id) => api.get(`/customers/${id}/activities`);
+export const createActivity = (data) => api.post('/activities', data);
 export const createCustomer = (data) => api.post('/customers', data);
 export const updateCustomer = (id, data) => api.put(`/customers/${id}`, data);
 export const deleteCustomer = (id) => api.delete(`/customers/${id}`);

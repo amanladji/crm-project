@@ -9,7 +9,7 @@ import authService from './services/auth.service';
 
 const PrivateRoute = ({ children }) => {
   const user = authService.getCurrentUser();
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <Navigate to="/login" replace />;
 };
 
 function App() {

@@ -13,18 +13,7 @@ function Customers() {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', company: '', address: '' });
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    setCurrentPage(0); // Reset to page 0 globally when a search query is changed
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCustomersList();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchQuery, currentPage]);
-
-  const fetchCustomersList = async () => {
+  async function fetchCustomersList() {
     setLoading(true);
     try {
       const response = await searchCustomers(searchQuery, currentPage, 10);
@@ -35,7 +24,19 @@ function Customers() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    setCurrentPage(0); // Reset to page 0 globally when a search query is changed
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchCustomersList();
+    }, 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, currentPage]);
 
   const fetchCustomers = () => {
     fetchCustomersList();

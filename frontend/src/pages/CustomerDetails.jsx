@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getCustomerById, getLeadsForCustomer, getActivitiesForCustomer } from '../services/customer.service';
+import { getCustomerById, getLeadsForCustomer, getActivitiesForCustomer, createActivity } from '../services/customer.service';
+import authService from '../services/auth.service';
 
 export default function CustomerDetails() {
   const { id } = useParams();
@@ -10,6 +11,24 @@ export default function CustomerDetails() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Activity form states
+  const [activityType, setActivityType] = useState('CALL');
+  const [activityDesc, setActivityDesc] = useState('');
+  const [activitySubmitting, setActivitySubmitting] = useState(false);
+  const [activityError, setActivityError] = useState('');
+
+  const fetchActivities = async () => {
+    try {
+      const res = await getActivitiesForCustomer(id);
+      // Backend should sort them, but let's reverse them just in case to show latest first if not sorted
+      // Actually let's assume backed sorting or do it here
+      const sorted = res.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      setActivities(sorted);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,7 +43,8 @@ export default function CustomerDetails() {
 
         setCustomer(customerRes.data);
         setLeads(leadsRes.data);
-        setActivities(activitiesRes.data);
+        const sorted = activitiesRes.data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        setActivities(sorted);
       } catch (err) {
         console.error('Error fetching customer details:', err);
         setError(err.response?.data?.message || 'Failed to load customer details. They may have been deleted or the server is unavailable.');
@@ -35,6 +55,46 @@ export default function CustomerDetails() {
 
     fetchData();
   }, [id]);
+
+  const handleActivitySubmit = async (e) => {
+    e.preventDefault();
+    if (!activityDesc.trim()) {
+      setActivityError('Description is required');
+      return;
+    }
+    
+    const user = authService.getCurrentUser();
+    if (!user || (!user.id && !user.userId)) {
+      setActivityError('User authentication failed. Please login again.');
+      return;
+    }
+
+    try {
+      setActivitySubmitting(true);
+      setActivityError('');
+      
+      const payload = {
+        type: activityType,
+        description: activityDesc,
+        customerId: parseInt(id),
+        userId: user.id || user.userId
+      };
+
+      await createActivity(payload);
+      
+      // reset form
+      setActivityType('CALL');
+      setActivityDesc('');
+      
+      // refresh activities
+      await fetchActivities();
+    } catch (err) {
+      console.error('Failed to log activity:', err);
+      setActivityError(err.response?.data?.message || 'Failed to log activity.');
+    } finally {
+      setActivitySubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -144,6 +204,56 @@ export default function CustomerDetails() {
           </div>
         </div>
 
+        {/* Add Activity Form */}
+        <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+          <div className="px-4 py-5 sm:px-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">Log Interaction</h3>
+          </div>
+          <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+            <form onSubmit={handleActivitySubmit} className="space-y-4">
+              {activityError && (
+                <div className="text-red-600 text-sm">{activityError}</div>
+              )}
+              
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-1">
+                  <label htmlFor="activityType" className="block text-sm font-medium text-gray-700">Type</label>
+                  <select
+                    id="activityType"
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                    value={activityType}
+                    onChange={(e) => setActivityType(e.target.value)}
+                  >
+                    <option value="CALL">📞 CALL</option>
+                    <option value="EMAIL">📧 EMAIL</option>
+                    <option value="MEETING">📅 MEETING</option>
+                  </select>
+                </div>
+                <div className="md:col-span-3">
+                  <label htmlFor="activityDesc" className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    id="activityDesc"
+                    rows="2"
+                    className="mt-1 block w-full shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm border border-gray-300 rounded-md p-2"
+                    placeholder="E.g., Discussed pricing..."
+                    value={activityDesc}
+                    onChange={(e) => setActivityDesc(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={activitySubmitting}
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                >
+                  {activitySubmitting ? 'Saving...' : 'Log Activity'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         {/* Activity Timeline Section */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
@@ -164,18 +274,28 @@ export default function CustomerDetails() {
                         <div className="relative flex space-x-3">
                           <div>
                             <span className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
-                              activity.type === 'CALL' ? 'bg-blue-500' :
-                              activity.type === 'EMAIL' ? 'bg-green-500' :
-                              activity.type === 'MEETING' ? 'bg-purple-500' :
-                              'bg-gray-500'
+                              activity.type === 'CALL' ? 'bg-blue-100' :
+                              activity.type === 'EMAIL' ? 'bg-green-100' :
+                              activity.type === 'MEETING' ? 'bg-purple-100' :
+                              'bg-gray-100'
                             }`}>
-                              <span className="text-white text-xs font-bold">{activity.type.charAt(0)}</span>
+                              <span className="text-xl">
+                                {activity.type === 'CALL' && '📞'}
+                                {activity.type === 'EMAIL' && '📧'}
+                                {activity.type === 'MEETING' && '📅'}
+                                {!['CALL', 'EMAIL', 'MEETING'].includes(activity.type) && '📝'}
+                              </span>
                             </span>
                           </div>
                           <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                             <div>
                               <p className="text-sm text-gray-500">
-                                <span className="font-medium text-gray-900 mr-2">{activity.type}</span>
+                                <span className={`font-semibold mr-2 p-1 rounded ${
+                                  activity.type === 'CALL' ? 'text-blue-800 bg-blue-50' :
+                                  activity.type === 'EMAIL' ? 'text-green-800 bg-green-50' :
+                                  activity.type === 'MEETING' ? 'text-purple-800 bg-purple-50' :
+                                  'text-gray-800 bg-gray-50'
+                                }`}>[{activity.type}]</span>
                                 {activity.description}
                               </p>
                             </div>

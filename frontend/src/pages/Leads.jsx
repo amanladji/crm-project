@@ -16,8 +16,33 @@ function Leads() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
+  async function fetchData() {
+    try {
+      setLoading(true);
+      const [leadsRes, customRes] = await Promise.all([searchLeads(searchQuery, statusFilter, currentPage, 10), getCustomers(0, 100)]);
+      setLeads(leadsRes.data.content);
+      setTotalPages(leadsRes.data.totalPages);
+      setCustomers(customRes.data.content || customRes.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setLoading(false);
+    }
+  }
+
+  async function fetchLeads() {
+    try {
+      const response = await searchLeads(searchQuery, statusFilter, currentPage, 10);
+      setLeads(response.data.content);
+      setTotalPages(response.data.totalPages);
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+    }
+  }
+
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -29,31 +54,8 @@ function Leads() {
       fetchLeads();
     }, 300);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, statusFilter, currentPage]);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [leadsRes, customRes] = await Promise.all([searchLeads(searchQuery, statusFilter, currentPage, 10), getCustomers(0, 100)]);
-      setLeads(leadsRes.data.content);
-      setTotalPages(leadsRes.data.totalPages);
-      setCustomers(customRes.data.content || customRes.data); // Keep backwards compatibility if ever needed
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setLoading(false);
-    }
-  };
-
-  const fetchLeads = async () => {
-    try {
-      const response = await searchLeads(searchQuery, statusFilter, currentPage, 10);
-      setLeads(response.data.content);
-      setTotalPages(response.data.totalPages);
-    } catch (error) {
-      console.error('Error fetching leads:', error);
-    }
-  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
