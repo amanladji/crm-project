@@ -20,7 +20,11 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
     List<Lead> findByStatus(LeadStatus status);
 
     @Query("SELECT l FROM Lead l WHERE " +
-           "(:status IS NULL OR l.status = :status) AND " +
            "(:query IS NULL OR LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
-    Page<Lead> searchAndFilterLeads(@Param("query") String query, @Param("status") LeadStatus status, Pageable pageable);
+    Page<Lead> searchLeads(@Param("query") String query, Pageable pageable);
+
+    @Query("SELECT l FROM Lead l WHERE " +
+           "l.status = :status AND " +
+           "(:query IS NULL OR LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Lead> filterLeadsByStatusAndSearch(@Param("query") String query, @Param("status") LeadStatus status, Pageable pageable);
 }

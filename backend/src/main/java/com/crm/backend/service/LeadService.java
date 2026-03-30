@@ -39,7 +39,7 @@ public class LeadService {
             }
         }
         String searchQuery = (query == null || query.trim().isEmpty()) ? null : query.trim();
-        return leadRepository.searchAndFilterLeads(searchQuery, status, pageable);
+        if (status == null) { return leadRepository.searchLeads(searchQuery, pageable); } else { return leadRepository.filterLeadsByStatusAndSearch(searchQuery, status, pageable); }
     }
 
     public Lead getLeadById(Long id) {
