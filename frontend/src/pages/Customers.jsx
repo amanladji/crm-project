@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer, searchCustomers } from '../services/customer.service';
+import Sidebar from '../components/Sidebar';
+import { createCustomer, updateCustomer, deleteCustomer, searchCustomers } from '../services/customer.service';
 
 function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -102,6 +103,8 @@ function Customers() {
     if (!validateForm()) return;
     
     try {
+      console.log('📝 Form data ready to submit:', JSON.stringify(formData, null, 2));
+      
       if (editingId) {
         await updateCustomer(editingId, formData);
         alert('Customer updated successfully');
@@ -113,8 +116,17 @@ function Customers() {
       fetchCustomers();
     } catch (error) {
       console.error('Error saving customer:', error);
-      if (error.response?.status === 400 && error.response?.data && typeof error.response.data === 'object' && !error.response.data.message) {
-        setErrors(error.response.data);
+      
+      // Handle validation errors from backend
+      if (error.response?.status === 400) {
+        const errorData = error.response?.data;
+        if (typeof errorData === 'object' && !errorData.message) {
+          setErrors(errorData);
+        } else {
+          alert(errorData?.message || 'Validation failed. Please check your input.');
+        }
+      } else if (error.response?.status === 500) {
+        alert('Server error: ' + (error.response?.data?.message || 'Failed to save customer'));
       } else {
         alert(error.response?.data?.message || 'Failed to save customer');
       }
@@ -122,10 +134,11 @@ function Customers() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+    <div className="flex h-screen bg-[#F8FAFC]">
+      <Sidebar />
+      <main className="flex-1 flex flex-col md:ml-64 overflow-y-auto">
+        <Navbar title="Customers" />
+        <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
             <div className="flex gap-4">

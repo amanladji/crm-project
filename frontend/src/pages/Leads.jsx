@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
-import { getLeads, createLead, updateLead, deleteLead, updateLeadStatus, searchLeads } from '../services/lead.service';
+import Sidebar from '../components/Sidebar';
+import { createLead, updateLead, deleteLead, updateLeadStatus, searchLeads } from '../services/lead.service';
 import { getCustomers } from '../services/customer.service';
 
 function Leads() {
@@ -46,10 +47,13 @@ function Leads() {
   }, []);
 
   useEffect(() => {
+    // When filters change, reset to page 0 and fetch
     setCurrentPage(0);
   }, [searchQuery, statusFilter]);
 
   useEffect(() => {
+    // Fetch with debounce when page or filters change
+    // Skip if currentPage is being reset (it will be handled by the above effect)
     const timer = setTimeout(() => {
       fetchLeads();
     }, 300);
@@ -143,10 +147,11 @@ function Leads() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar />
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+    <div className="flex h-screen bg-[#F8FAFC]">
+      <Sidebar />
+      <main className="flex-1 flex flex-col md:ml-64 overflow-y-auto">
+        <Navbar title="Leads" />
+        <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
             <div className="flex gap-4 items-center">

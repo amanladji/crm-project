@@ -19,12 +19,22 @@ public interface LeadRepository extends JpaRepository<Lead, Long> {
 
     List<Lead> findByStatus(LeadStatus status);
 
+    // Query for when a search query is provided
     @Query("SELECT l FROM Lead l WHERE " +
-           "(:query IS NULL OR LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+           "LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<Lead> searchLeads(@Param("query") String query, Pageable pageable);
 
+    // Query for when no search query is provided
+    @Query("SELECT l FROM Lead l ORDER BY l.id DESC")
+    Page<Lead> searchLeadsNoQuery(Pageable pageable);
+
+    // Query for when status is provided with search query
     @Query("SELECT l FROM Lead l WHERE " +
            "l.status = :status AND " +
-           "(:query IS NULL OR LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
+           "(LOWER(l.name) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(l.email) LIKE LOWER(CONCAT('%', :query, '%')))")
     Page<Lead> filterLeadsByStatusAndSearch(@Param("query") String query, @Param("status") LeadStatus status, Pageable pageable);
+
+    // Query for when only status is provided (no search query)
+    @Query("SELECT l FROM Lead l WHERE l.status = :status ORDER BY l.id DESC")
+    Page<Lead> filterLeadsByStatus(@Param("status") LeadStatus status, Pageable pageable);
 }

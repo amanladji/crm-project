@@ -50,6 +50,37 @@ public class DataSeeder implements CommandLineRunner {
             user.setRole(Role.ADMIN);
             return userRepository.save(user);
         });
+        
+        // Create test users for chat functionality
+        User amanUser = userRepository.findByUsername("aman").orElseGet(() -> {
+            User user = new User();
+            user.setUsername("aman");
+            user.setEmail("aman@example.com");
+            user.setPassword(passwordEncoder.encode("aman123456"));
+            user.setRole(Role.USER);
+            System.out.println("✓ Created test user: aman");
+            return userRepository.save(user);
+        });
+        
+        User ahmedUser = userRepository.findByUsername("ahmed").orElseGet(() -> {
+            User user = new User();
+            user.setUsername("ahmed");
+            user.setEmail("ahmed@example.com");
+            user.setPassword(passwordEncoder.encode("ahmed123456"));
+            user.setRole(Role.USER);
+            System.out.println("✓ Created test user: ahmed");
+            return userRepository.save(user);
+        });
+        
+        User sarahUser = userRepository.findByUsername("sarah").orElseGet(() -> {
+            User user = new User();
+            user.setUsername("sarah");
+            user.setEmail("sarah@example.com");
+            user.setPassword(passwordEncoder.encode("sarah123456"));
+            user.setRole(Role.USER);
+            System.out.println("✓ Created test user: sarah");
+            return userRepository.save(user);
+        });
 
         // 2. Create Realistic Customers
         List<Customer> sampleCustomers = Arrays.asList(

@@ -5,6 +5,9 @@ import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import CustomerDetails from './pages/CustomerDetails';
 import Leads from './pages/Leads';
+import ChatPage from './pages/ChatPage';
+import ActivityPage from './pages/ActivityPage';
+import Settings from './pages/Settings';
 import authService from './services/auth.service';
 
 const PrivateRoute = ({ children }) => {
@@ -23,6 +26,16 @@ function App() {
              <Dashboard />
           </PrivateRoute>
         } />
+        <Route path="/chat" element={
+          <PrivateRoute>
+             <ChatPage />
+          </PrivateRoute>
+        } />
+        <Route path="/activity" element={
+          <PrivateRoute>
+             <ActivityPage />
+          </PrivateRoute>
+        } />
         <Route path="/customers" element={
           <PrivateRoute>
              <Customers />
@@ -36,6 +49,11 @@ function App() {
         <Route path="/leads" element={
           <PrivateRoute>
              <Leads />
+          </PrivateRoute>
+        } />
+        <Route path="/settings" element={
+          <PrivateRoute>
+             <Settings />
           </PrivateRoute>
         } />
       </Routes>

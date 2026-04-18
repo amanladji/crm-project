@@ -3,6 +3,7 @@ package com.crm.backend.entity;
 import com.crm.backend.enums.ActivityType;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,7 +23,9 @@ public class Activity {
     @Column(nullable = false)
     private ActivityType type;
 
-    private LocalDateTime timestamp = LocalDateTime.now();
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime timestamp;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lead_id")

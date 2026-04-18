@@ -10,4 +10,5 @@ import java.util.List;
 public interface ActivityRepository extends JpaRepository<Activity, Long> {
     List<Activity> findByLeadId(Long leadId);
     List<Activity> findByCustomerId(Long customerId);
+    List<Activity> findAllByOrderByTimestampDesc();
 }
