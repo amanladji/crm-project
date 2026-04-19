@@ -24,7 +24,8 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 COPY --from=backend-build /app/backend/target/*.jar app.jar
 
-# Render assigns a dynamic PORT, we pass it to Spring Boot as a JVM argument
-EXPOSE 8080
+# Render assigns an dynamic PORT, Spring Boot defaults to 8080. We use the server.port env variable
+ENV SERVER_PORT=${PORT:-8080}
+EXPOSE ${PORT:-8080}
 
-ENTRYPOINT ["java", "-Dserver.port=${PORT:-8080}", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,0 +1,21 @@
+﻿ID=$userId1 : The term 'ID=$userId1' is not recognized as the name of a 
+cmdlet, function, script file, or operable program. Check the spelling of the 
+name, or if a path was included, verify that the path is correct and try again.
+At C:\Users\amanl\Downloads\Tap_projects\Customer Relationship Management 
+System\crm-project\test_chat_accept_e2e.ps1:30 char:37
++ Write-Host "âœ… User 1: $username1 (ID=$userId1)" -ForegroundColor Gr ...
++                                     ~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (ID=$userId1:String) [], Command 
+   NotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Invoke-RestMethod : The remote server returned an error: (403) Forbidden.
+At C:\Users\amanl\Downloads\Tap_projects\Customer Relationship Management 
+System\crm-project\test_chat_accept_e2e.ps1:59 char:20
++ ... ndingResponse = Invoke-RestMethod -Uri "$BaseUrl/api/chat/requests" `
++                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (System.Net.HttpWebRequest:Htt 
+   pWebRequest) [Invoke-RestMethod], WebException
+    + FullyQualifiedErrorId : WebCmdletWebResponseException,Microsoft.PowerShe 
+   ll.Commands.InvokeRestMethodCommand
+ 

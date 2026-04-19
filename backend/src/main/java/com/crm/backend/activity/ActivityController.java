@@ -3,17 +3,11 @@ package com.crm.backend.activity;
 import com.crm.backend.activity.dto.ActivityRequest;
 import com.crm.backend.entity.Activity;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/activities")
@@ -23,32 +17,31 @@ public class ActivityController {
     private final ActivityService activityService;
 
     @GetMapping
-    public ResponseEntity<?> getAllActivities(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String[] sort) {
+    public ResponseEntity<List<Activity>> getAllActivities(
+            @RequestParam(required = false, defaultValue = "false") boolean paginated) {
         try {
-            String sortField = "timestamp";
-            Sort.Direction sortDirection = Sort.Direction.DESC;
+            System.out.println("📥 ActivityController: Fetching all activities...");
+            System.out.println("🔗 Endpoint: GET /api/activities");
             
-            if (sort != null && sort.length > 0) {
-                if (sort.length == 1 && sort[0].contains(",")) {
-                    String[] parts = sort[0].split(",");
-                    sortField = parts[0].trim();
-                    sortDirection = parts.length > 1 && parts[1].trim().equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-                } else if (sort.length >= 2) {
-                    sortField = sort[0];
-                    sortDirection = sort[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-                } else if (sort.length == 1) {
-                    sortField = sort[0];
-                }
-            }
+            List<Activity> activities = activityService.getAllActivitiesAsList();
             
-            Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sortField));
-            Page<Activity> pageActivities = activityService.getAllActivities(pageable);
-            return ResponseEntity.ok(createPaginatedResponse(pageActivities));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            System.out.println("✅ ActivityController: Retrieved " + activities.size() + " activities from service");
+            System.out.println("📊 Response type: List<Activity>");
+            System.out.println("📤 Returning response with status 200 OK");
+            
+            // Return direct array response (no wrapper object)
+            return ResponseEntity.ok()
+                    .header("X-Total-Count", String.valueOf(activities.size()))
+                    .body(activities);
+        } catch (Exception e) {
+            System.err.println("❌ ActivityController Exception:");
+            System.err.println("   Error message: " + e.getMessage());
+            System.err.println("   Error type: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            
+            // Return empty array on error (graceful degradation)
+            System.out.println("📤 Returning empty array due to error");
+            return ResponseEntity.ok(List.of());
         }
     }
 
@@ -81,14 +74,5 @@ public class ActivityController {
     public ResponseEntity<Void> deleteActivity(@PathVariable Long id) {
         activityService.deleteActivity(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private Map<String, Object> createPaginatedResponse(Page<?> pageData) {
-        Map<String, Object> response = new HashMap<>();
-        response.put("content", pageData.getContent());
-        response.put("currentPage", pageData.getNumber());
-        response.put("totalItems", pageData.getTotalElements());
-        response.put("totalPages", pageData.getTotalPages());
-        return response;
     }
 }

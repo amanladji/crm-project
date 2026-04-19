@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { getDashboardAnalytics } from '../services/analytics.service';
@@ -61,32 +62,48 @@ function Dashboard() {
       }
       
       if (!token) {
+        console.error('❌ No authentication token found');
         throw new Error('No authentication token found. Please log in again.');
       }
       
-      const response = await fetch('http://localhost:8081/api/users', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      console.log('📥 Fetching users from API...');
+      console.log('Token:', token.substring(0, 20) + '...');
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+      const response = await api.get('/users');
+      
+      console.log('✅ API Response received:', response);
+      console.log('Response status:', response.status);
+      console.log('Response data type:', typeof response.data);
+      console.log('Is array:', Array.isArray(response.data));
+      
+      const data = response.data;
+      
+      // Validate data is an array
+      if (!Array.isArray(data)) {
+        console.error('❌ Invalid response format - expected array, got:', typeof data, data);
+        throw new Error('Invalid response format from server');
       }
       
-      const data = await response.json();
       console.log('✅ Users fetched from API:', data);
       console.log('Users count:', data.length);
-      if (data.length > 0) console.log('First user:', data[0]);
+      if (data.length > 0) {
+        console.log('First user:', data[0]);
+        console.log('User structure:', Object.keys(data[0]));
+      }
+      
+      // Set users in state
       setUsers(data || []);
+      console.log('✅ Users state updated');
+      
     } catch (error) {
-      console.error('❌ Error fetching users:', error.message);
+      console.error('❌ Error fetching users');
+      console.error('Error message:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error response:', error.response);
       console.error('Full error:', error);
+      
       setUsers([]);
-      setMessage(error.message || 'Failed to fetch users');
+      setMessage(`Failed to load users: ${error.message}`);
       setMessageType('error');
     } finally {
       setUsersLoading(false);
@@ -95,6 +112,7 @@ function Dashboard() {
 
   // Handle closing modal
   const handleCloseModal = () => {
+    console.log('🔴 Closing modal');
     setIsModalOpen(false);
     setCampaignName('');
     setDescription('');
@@ -102,6 +120,33 @@ function Dashboard() {
     setMessage('');
     setSelectedUsers([]);
   };
+
+  // Disable body scroll when modal opens, restore when closes
+  useEffect(() => {
+    if (isModalOpen) {
+      console.log('🔐 Modal opened - disabling body scroll');
+      document.body.style.overflow = 'hidden';
+
+      // Handle Escape key to close modal
+      const handleEscapeKey = (event) => {
+        if (event.key === 'Escape') {
+          console.log('⌨️ Escape key pressed - closing modal');
+          handleCloseModal();
+        }
+      };
+
+      document.addEventListener('keydown', handleEscapeKey);
+
+      // Cleanup on unmount
+      return () => {
+        document.removeEventListener('keydown', handleEscapeKey);
+        document.body.style.overflow = 'auto';
+      };
+    } else {
+      console.log('🔓 Modal closed - restoring body scroll');
+      document.body.style.overflow = 'auto';
+    }
+  }, [isModalOpen]);
 
   // Handle View All button click - Navigate to Activity Page
   const handleViewAllClick = () => {
@@ -180,22 +225,8 @@ function Dashboard() {
       };
       console.log('Campaign payload:', campaignPayload);
       
-      const createResponse = await fetch('http://localhost:8081/api/campaigns', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(campaignPayload)
-      });
-
-      if (!createResponse.ok) {
-        const errorText = await createResponse.text();
-        console.error('Campaign creation failed:', errorText);
-        throw new Error('Failed to create campaign');
-      }
-
-      const campaignData = await createResponse.json();
+      const createResponse = await api.post('/campaigns', campaignPayload);
+      const campaignData = createResponse.data;
       console.log('✓ Campaign created:', campaignData);
 
       // Step 2: Send campaign messages
@@ -203,24 +234,11 @@ function Dashboard() {
       setMessage('Campaign created! Sending messages...');
       setMessageType('success');
 
-      const sendResponse = await fetch('http://localhost:8081/api/campaigns/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          campaignId: campaignData.id
-        })
+      const sendResponse = await api.post('/campaigns/send', {
+        campaignId: campaignData.id
       });
 
-      if (!sendResponse.ok) {
-        const errorText = await sendResponse.text();
-        console.error('Send message failed:', errorText);
-        throw new Error('Failed to send campaign messages');
-      }
-
-      const sendData = await sendResponse.json();
+      const sendData = sendResponse.data;
       console.log('✓ Campaign messages sent:', sendData);
 
       setMessage(`Campaign sent successfully to ${sendData.successCount} user(s)!`);
@@ -403,14 +421,24 @@ function Dashboard() {
 
         {/* Campaign Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={handleCloseModal}
+            style={{ overflow: 'hidden' }}
+          >
+            <div 
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Modal Header */}
-              <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold text-gray-900">Create New Campaign</h2>
                 <button 
                   onClick={handleCloseModal}
-                  className="text-gray-500 hover:text-gray-700 transition-colors">
+                  className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg p-1 transition-colors flex-shrink-0"
+                  title="Close modal (Escape key also works)"
+                  type="button"
+                >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
                   </svg>
@@ -516,7 +544,7 @@ function Dashboard() {
                   )}
 
                   {/* Modal Footer */}
-                  <div className="flex gap-3 pt-4">
+                  <div className="flex gap-3 pt-4 border-t border-gray-100">
                     <button
                       type="button"
                       onClick={handleCloseModal}

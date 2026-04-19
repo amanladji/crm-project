@@ -12,30 +12,50 @@ function ActivityPage() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
+        console.log('🔄 ActivityPage: Starting fetch...');
         setLoading(true);
+        setError(null);
+        
         // Get token from localStorage
         const token = localStorage.getItem('token');
         if (!token) {
+          console.warn('⚠️ No authentication token found');
           setError('No authentication token found. Please log in again.');
           setLoading(false);
           return;
         }
+        
+        console.log('✅ Token found in localStorage');
 
         // Fetch activities from backend
+        console.log('📡 Calling getAllActivities API...');
         const data = await getAllActivities(token);
         
         // DEBUG: Log API response
-        console.log('🔍 DEBUG - API Response received:', data);
-        console.log('🔍 DEBUG - Is Array:', Array.isArray(data));
-        console.log('🔍 DEBUG - Response Type:', typeof data);
+        console.log('✅ API Response received');
+        console.log('   Length:', data?.length);
+        console.log('   Is Array:', Array.isArray(data));
+        console.log('   Response Type:', typeof data);
+        console.log('   First item:', data?.[0]);
         
         // SAFETY CHECK: Ensure data is an array before calling .map()
         if (!Array.isArray(data)) {
-          console.error('❌ ERROR: Invalid activities data - expected array, got:', typeof data, data);
+          console.error('❌ ERROR: Invalid activities data - expected array, got:', typeof data);
           setActivities([]);
-          setError('Invalid data format received from server');
+          setError('Invalid data format received from server. Expected array.');
+          setLoading(false);
           return;
         }
+        
+        if (data.length === 0) {
+          console.log('📭 No activities found in response');
+          setActivities([]);
+          setError(null);
+          setLoading(false);
+          return;
+        }
+        
+        console.log(`📋 Processing ${data.length} activities...`);
         
         // Transform API response to component format
         const transformedActivities = data.map((activity) => {
@@ -88,11 +108,30 @@ function ActivityPage() {
           };
         });
 
+        console.log(`✅ Transformed ${transformedActivities.length} activities successfully`);
         setActivities(transformedActivities);
         setError(null);
       } catch (err) {
-        console.error('Error fetching activities:', err);
-        setError('Failed to load activities. Please try again later.');
+        console.error('❌ ActivityPage Error:');
+        console.error('   Message:', err.message);
+        console.error('   Status:', err.response?.status);
+        console.error('   Status Text:', err.response?.statusText);
+        console.error('   Data:', err.response?.data);
+        console.error('   Full error:', err);
+        
+        // Provide user-friendly error message based on error type
+        let userMessage = 'Failed to load activities. Please try again later.';
+        if (err.response?.status === 404) {
+          userMessage = 'Activities endpoint not found. Please contact support.';
+        } else if (err.response?.status === 401) {
+          userMessage = 'Authentication failed. Please log in again.';
+        } else if (err.response?.status === 403) {
+          userMessage = 'You do not have permission to view activities.';
+        } else if (err.message === 'Network Error') {
+          userMessage = 'Network error. Please check your connection.';
+        }
+        
+        setError(userMessage);
         setActivities([]);
       } finally {
         setLoading(false);

@@ -11,10 +11,21 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedOrigins(
+                    // Development
+                    "http://localhost:5173", 
+                    "http://localhost:5174", 
+                    "http://localhost:5175", 
+                    "http://localhost:5176",
+                    "http://localhost:3000",
+                    "http://localhost:8081",
+                    // Production - allow requests from same origin and any origin for API calls
+                    "*"
+                )
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
-                .allowCredentials(true);
+                .allowCredentials(false)  // Set to false when using wildcard origin
+                .maxAge(3600);
     }
     
     @Override

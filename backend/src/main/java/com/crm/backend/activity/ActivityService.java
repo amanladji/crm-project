@@ -34,6 +34,34 @@ public class ActivityService {
         return activityRepository.findAll(pageable);
     }
 
+    public List<Activity> getAllActivitiesAsList() {
+        try {
+            System.out.println("📥 ActivityService.getAllActivitiesAsList() called");
+            System.out.println("🔍 Querying database for all activities...");
+            
+            List<Activity> activities = activityRepository.findAllByOrderByTimestampDesc();
+            
+            System.out.println("✅ Query successful - Retrieved " + activities.size() + " activities from database");
+            if (activities.isEmpty()) {
+                System.out.println("ℹ️  No activities found in database");
+            } else {
+                System.out.println("📊 First activity: ID=" + activities.get(0).getId() + 
+                                 ", Type=" + activities.get(0).getType() + 
+                                 ", Timestamp=" + activities.get(0).getTimestamp());
+            }
+            
+            return activities;
+        } catch (Exception e) {
+            System.err.println("❌ ActivityService Exception in getAllActivitiesAsList():");
+            System.err.println("   Error: " + e.getMessage());
+            System.err.println("   Type: " + e.getClass().getSimpleName());
+            e.printStackTrace();
+            
+            System.out.println("📤 Returning empty list due to error");
+            return List.of();
+        }
+    }
+
     public List<Activity> getActivitiesByLead(Long leadId) {
         return activityRepository.findByLeadId(leadId);
     }
