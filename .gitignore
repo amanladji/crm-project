@@ -1,0 +1,43 @@
+# Java/Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+.classpath
+.project
+.settings/
+*.log
+
+# Node/Frontend
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Build outputs
+out/
+bin/
+
+# Sensitive Configuration Files
+# NEVER commit files with real credentials
+application-dev.properties
+application-test.properties
+.env
+
+# Test results
+test_results_*.json
+
+# Build files
+/backend/mvnw
+/backend/mvnw.cmd
